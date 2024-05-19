@@ -11,7 +11,7 @@ from ..exceptions import NonStreamableError
 from ..filepath_utils import clean_filepath
 from ..metadata import AlbumMetadata
 from ..metadata.util import get_album_track_ids
-from .artwork import download_artwork
+from .artwork import download_artwork, remove_artwork_tempdirs
 from .media import Media, Pending
 from .track import PendingTrack
 
@@ -41,6 +41,7 @@ class Album(Media):
 
     async def postprocess(self):
         progress.remove_title(self.meta.album)
+        remove_artwork_tempdirs()
 
 
 @dataclass(slots=True)
@@ -105,5 +106,6 @@ class PendingAlbum(Pending):
         folder = clean_filepath(
             meta.format_folder_path(formatter), config.filepaths.restrict_characters
         )
+        folder.replace(' ', '_')
 
         return os.path.join(parent, folder)

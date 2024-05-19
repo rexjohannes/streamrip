@@ -49,6 +49,12 @@ class Dummy(DatabaseInterface):
 
     def all(self):
         return []
+    
+    def downloaded(self, item_id: str) -> bool:
+        return False
+
+    def set_downloaded(self, item_id: str):
+        pass
 
 
 class DatabaseBase(DatabaseInterface):

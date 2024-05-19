@@ -11,7 +11,7 @@ from ..exceptions import NonStreamableError
 from ..filepath_utils import clean_filename
 from ..metadata import AlbumMetadata, Covers, TrackMetadata, tag_file
 from ..progress import add_title, get_progress_callback, remove_title
-from .artwork import download_artwork
+from .artwork import download_artwork, remove_artwork_tempdirs
 from .media import Media, Pending
 from .semaphore import global_download_semaphore
 
@@ -80,6 +80,7 @@ class Track(Media):
         if self.config.session.conversion.enabled:
             await self._convert()
 
+        remove_artwork_tempdirs()
         self.db.set_downloaded(self.meta.info.id)
 
     async def _convert(self):
@@ -100,7 +101,7 @@ class Track(Media):
         track_path = clean_filename(
             self.meta.format_track_path(formatter),
             restrict=c.restrict_characters,
-        )
+        ).replace(' ', '_')
         if c.truncate_to > 0 and len(track_path) > c.truncate_to:
             track_path = track_path[: c.truncate_to]
 
@@ -249,7 +250,7 @@ class PendingSingle(Pending):
         if c.downloads.source_subdirectories:
             parent = os.path.join(parent, self.client.source.capitalize())
 
-        return os.path.join(parent, meta.format_folder_path(formatter))
+        return os.path.join(parent, meta.format_folder_path(formatter).replace(' ', '_'))
 
     async def _download_cover(self, covers: Covers, folder: str) -> str | None:
         embed_path, _ = await download_artwork(

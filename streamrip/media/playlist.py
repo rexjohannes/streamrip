@@ -24,7 +24,7 @@ from ..metadata import (
     SearchResults,
     TrackMetadata,
 )
-from .artwork import download_artwork
+from .artwork import download_artwork, remove_artwork_tempdirs
 from .media import Media, Pending
 from .track import Track
 
@@ -115,6 +115,7 @@ class Playlist(Media):
 
     async def postprocess(self):
         progress.remove_title(self.name)
+        remove_artwork_tempdirs()
 
     async def download(self):
         track_resolve_chunk_size = 20
