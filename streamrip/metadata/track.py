@@ -236,4 +236,4 @@ class TrackMetadata:
             "composer": self.composer or none_text,
             "explicit": " (Explicit) " if self.info.explicit else "",
         }
-        return format_string.format(**info)
+        return format_string.format(**info).replace(' ', '_')

@@ -106,6 +106,5 @@ class PendingAlbum(Pending):
         folder = clean_filepath(
             meta.format_folder_path(formatter), config.filepaths.restrict_characters
         )
-        folder.replace(' ', '_')
 
         return os.path.join(parent, folder)

@@ -101,7 +101,7 @@ class Track(Media):
         track_path = clean_filename(
             self.meta.format_track_path(formatter),
             restrict=c.restrict_characters,
-        ).replace(' ', '_')
+        )
         if c.truncate_to > 0 and len(track_path) > c.truncate_to:
             track_path = track_path[: c.truncate_to]
 
@@ -250,7 +250,7 @@ class PendingSingle(Pending):
         if c.downloads.source_subdirectories:
             parent = os.path.join(parent, self.client.source.capitalize())
 
-        return os.path.join(parent, meta.format_folder_path(formatter).replace(' ', '_'))
+        return os.path.join(parent, meta.format_folder_path(formatter))
 
     async def _download_cover(self, covers: Covers, folder: str) -> str | None:
         embed_path, _ = await download_artwork(

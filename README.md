@@ -23,37 +23,13 @@ A scriptable stream downloader for Qobuz, Tidal, Deezer and SoundCloud.
 
 First, ensure [Python](https://www.python.org/downloads/) (version 3.10 or greater) and [pip](https://pip.pypa.io/en/stable/installing/) are installed. Then install `ffmpeg`. You may choose not to install this, but some functionality will be limited.
 
-```bash
-pip3 install streamrip --upgrade
-```
-
-When you type
-
-```bash
-rip
-```
-
-it should show the main help page. If you have no idea what these mean, or are having other issues installing, check out the [detailed installation instructions](https://github.com/nathom/streamrip/wiki#detailed-installation-instructions).  
-
-For Arch Linux users, an AUR package exists. Make sure to install required packages from the AUR before using `makepkg` or use an AUR helper to automatically resolve them.  
-```
-git clone https://aur.archlinux.org/streamrip.git
-cd streamrip
-makepkg -si
-```
- or
- ```
-paru -S streamrip
-```
-
-
-### Streamrip beta
+### Streamrip
 
 If you want to get access to the latest and greatest features without waiting for a new release, install
-from the `dev` branch with the following command
+from the `main` branch with the following command
 
 ```bash
-pip3 install git+https://github.com/nathom/streamrip.git@dev
+pip3 install git+https://github.com/rexjohannes/streamrip.git@main
 ```
 
 ## Example Usage

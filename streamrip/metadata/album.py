@@ -78,7 +78,7 @@ class AlbumMetadata:
             "container": self.info.container,
         }
 
-        return formatter.format(**info)
+        return formatter.format(**info).replace(' ', '_')
 
     @classmethod
     def from_qobuz(cls, resp: dict) -> AlbumMetadata:
