@@ -11,7 +11,7 @@ from ..exceptions import NonStreamableError
 from ..filepath_utils import clean_filename
 from ..metadata import AlbumMetadata, Covers, TrackMetadata, tag_file
 from ..progress import add_title, get_progress_callback, remove_title
-from .artwork import download_artwork, remove_artwork_tempdirs
+from .artwork import download_artwork
 from .media import Media, Pending
 from .semaphore import global_download_semaphore
 
@@ -80,7 +80,6 @@ class Track(Media):
         if self.config.session.conversion.enabled:
             await self._convert()
 
-        remove_artwork_tempdirs()
         self.db.set_downloaded(self.meta.info.id)
 
     async def _convert(self):
