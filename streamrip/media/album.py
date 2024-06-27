@@ -106,5 +106,8 @@ class PendingAlbum(Pending):
         folder = clean_filepath(
             meta.format_folder_path(formatter), config.filepaths.restrict_characters
         )
+        c = self.config.session.filepaths
+        if c.truncate_to > 0 and len(folder) > c.truncate_to:
+            folder = folder[: c.truncate_to]
 
         return os.path.join(parent, folder)
