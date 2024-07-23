@@ -53,12 +53,10 @@ rip url https://www.qobuz.com/us-en/album/back-in-black-ac-dc/0886444889841 http
 Download the album and convert it to `mp3`
 
 ```bash
-rip url --codec=MP3 https://open.qobuz.com/album/0060253780968
+rip --codec mp3 url https://open.qobuz.com/album/0060253780968
 ```
 
-
-
-To set the maximum quality, use the `--max-quality` option to `0, 1, 2, 3, 4`:
+To set the maximum quality, use the `--quality` option to `0, 1, 2, 3, 4`:
 
 | Quality ID | Audio Quality         | Available Sources                            |
 | ---------- | --------------------- | -------------------------------------------- |
@@ -70,12 +68,12 @@ To set the maximum quality, use the `--max-quality` option to `0, 1, 2, 3, 4`:
 
 
 ```bash
-rip url --max-quality=3 https://tidal.com/browse/album/147569387
+rip --quality 3 url https://tidal.com/browse/album/147569387
 ```
 
-> Using `4` is generally a waste of space. It is impossible for humans to perceive the between sampling rates higher than 44.1 kHz. It may be useful if you're processing/slowing down the audio.
+> Using `4` is generally a waste of space. It is impossible for humans to perceive the difference between sampling rates higher than 44.1 kHz. It may be useful if you're processing/slowing down the audio.
 
-Search for albums matching `lil uzi vert` on SoundCloud
+Search for playlists matching `rap` on Tidal
 
 ```bash
 rip search tidal playlist 'rap'
@@ -101,9 +99,7 @@ For more customization, see the config file
 rip config open
 ```
 
-
-
-If you're confused about anything, see the help pages. The main help pages can be accessed by typing `rip` by itself in the command line. The help pages for each command can be accessed with the `-help` flag. For example, to see the help page for the `url` command, type
+If you're confused about anything, see the help pages. The main help pages can be accessed by typing `rip` by itself in the command line. The help pages for each command can be accessed with the `--help` flag. For example, to see the help page for the `url` command, type
 
 ```
 rip url --help
@@ -140,7 +136,7 @@ Please document any functions or obscure lines of code.
 
 ### The Wiki
 
-To help out `streamrip` users that may be having trouble, consider contributing some information to the wiki. 
+To help out `streamrip` users that may be having trouble, consider contributing some information to the wiki.
 Nothing is too obvious and everything is appreciated.
 
 ## Acknowledgements
@@ -153,8 +149,6 @@ Thanks to Vitiko98, Sorrow446, and DashLt for their contributions to this projec
 - [Qo-DL Reborn](https://github.com/badumbass/Qo-DL-Reborn)
 - [Tidal-Media-Downloader](https://github.com/yaronzz/Tidal-Media-Downloader)
 - [scdl](https://github.com/flyingrub/scdl)
-
-
 
 ## Disclaimer
 
