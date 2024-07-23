@@ -126,7 +126,7 @@ class DeezerDownloadable(Downloadable):
         self.source: str = "deezer"
         qualities_available = [
             i for i, size in enumerate(info["quality_to_size"]) if size > 0
-        )
+        ]
         if len(qualities_available) == 0:
             raise NonStreamableError(
                 "Missing download info. Skipping.",
