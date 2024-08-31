@@ -105,7 +105,7 @@ class PendingAlbum(Pending):
         formatter = config.filepaths.folder_format
         folder = clean_filepath(
             meta.format_folder_path(formatter), config.filepaths.restrict_characters
-        )
+        ).replace("Various.Artists", "VA")
         c = self.config.session.filepaths
         if c.truncate_to > 0 and len(folder) > c.truncate_to:
             folder = folder[: c.truncate_to]
