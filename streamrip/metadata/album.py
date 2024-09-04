@@ -78,7 +78,7 @@ class AlbumMetadata:
             "container": self.info.container,
         }
 
-        return clean_filename(formatter.format(**info)).replace(' ', '_')
+        return clean_filename(formatter.format(**info)).replace(' ', '_').replace('Various_Artists', 'VA')
 
     @classmethod
     def from_qobuz(cls, resp: dict) -> AlbumMetadata:
