@@ -13,23 +13,16 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
-
 import aiofiles
 import aiohttp
 import m3u8
 import requests
 from Cryptodome.Cipher import AES, Blowfish
 from Cryptodome.Util import Counter
-
 from .. import converter
 from ..exceptions import NonStreamableError
-
 logger = logging.getLogger("streamrip")
-
-
 BLOWFISH_SECRET = "g4el58wc0zvf9na1"
-
-
 def generate_temp_path(url: str):
     return os.path.join(
         tempfile.gettempdir(),
@@ -39,7 +32,6 @@ def generate_temp_path(url: str):
 
 async def fast_async_download(path, url, headers, callback):
     """Asynchronous download with yield for every chunk read.
-
     Using aiofiles/aiohttp to download the file asynchronously and yield to the event loop
     for every chunk read to avoid CPU-bound issues.
     """
@@ -52,8 +44,6 @@ async def fast_async_download(path, url, headers, callback):
                 async for chunk in resp.content.iter_chunked(chunk_size):
                     await file.write(chunk)
                     callback(len(chunk))
-
-
 @dataclass(slots=True)
 class Downloadable(ABC):
     session: aiohttp.ClientSession
@@ -61,31 +51,26 @@ class Downloadable(ABC):
     extension: str
     source: str = "Unknown"
     _size_base: Optional[int] = None
-
     async def download(self, path: str, callback: Callable[[int], Any]):
         await self._download(path, callback)
-
     async def size(self) -> int:
         if hasattr(self, "_size") and self._size is not None:
             return self._size
-
         async with self.session.head(self.url) as response:
             response.raise_for_status()
             content_length = response.headers.get("Content-Length", 0)
             self._size = int(content_length)
             return self._size
-
     @property
     def _size(self):
         return self._size_base
-
     @_size.setter
     def _size(self, v):
         self._size_base = v
-
     @abstractmethod
     async def _download(self, path: str, callback: Callable[[int], None]):
         raise NotImplementedError
+
 
 class BasicDownloadable(Downloadable):
     """Just downloads a URL."""
@@ -106,6 +91,7 @@ class BasicDownloadable(Downloadable):
     async def _download(self, path: str, callback):
         await fast_async_download(path, self.url, self.session.headers, callback)
 
+
 class DeezerDownloadable(Downloadable):
     is_encrypted = re.compile("/m(?:obile|edia)/")
 
@@ -118,11 +104,16 @@ class DeezerDownloadable(Downloadable):
             i for i, size in enumerate(info["quality_to_size"]) if size > 0
         ]
         if len(qualities_available) == 0:
-            raise NonStreamableError("Missing download info. Skipping.")
+            raise NonStreamableError(
+                "Missing download info. Skipping.",
+            )
         max_quality_available = max(qualities_available)
         self.quality = min(info["quality"], max_quality_available)
         self._size = info["quality_to_size"][self.quality]
-        self.extension = "mp3" if self.quality <= 1 else "flac"
+        if self.quality <= 1:
+            self.extension = "mp3"
+        else:
+            self.extension = "flac"
         self.id = str(info["id"])
 
     async def _download(self, path: str, callback):
@@ -132,39 +123,73 @@ class DeezerDownloadable(Downloadable):
             if self._size < 20000 and not self.url.endswith(".jpg"):
                 try:
                     info = await resp.json()
-                    raise NonStreamableError(info.get("error", "File not found."))
+                    try:
+                        raise NonStreamableError(f"{info['error']} - {info['message']}")
+                    except KeyError:
+                        raise NonStreamableError(info)
+
                 except json.JSONDecodeError:
                     raise NonStreamableError("File not found.")
 
             if self.is_encrypted.search(self.url) is None:
                 logger.debug(f"Deezer file at {self.url} not encrypted.")
-                await fast_async_download(path, self.url, self.session.headers, callback)
+                await fast_async_download(
+                    path, self.url, self.session.headers, callback
+                )
             else:
                 blowfish_key = self._generate_blowfish_key(self.id)
                 logger.debug(
                     "Deezer file (id %s) at %s is encrypted. Decrypting with %s",
-                    self.id, self.url, blowfish_key,
+                    self.id,
+                    self.url,
+                    blowfish_key,
                 )
+
+                buf = bytearray()
+                async for data, _ in resp.content.iter_chunks():
+                    buf += data
+                    callback(len(data))
+
+                encrypt_chunk_size = 3 * 2048
                 async with aiofiles.open(path, "wb") as audio:
-                    async for chunk in resp.content.iter_chunked(2048):
-                        decrypted_chunk = self._decrypt_chunk(blowfish_key, chunk)
+                    buflen = len(buf)
+                    for i in range(0, buflen, encrypt_chunk_size):
+                        data = buf[i : min(i + encrypt_chunk_size, buflen)]
+                        if len(data) >= 2048:
+                            decrypted_chunk = (
+                                self._decrypt_chunk(blowfish_key, data[:2048])
+                                + data[2048:]
+                            )
+                        else:
+                            decrypted_chunk = data
                         await audio.write(decrypted_chunk)
-                        callback(len(chunk))
 
     @staticmethod
     def _decrypt_chunk(key, data):
+        """Decrypt a chunk of a Deezer stream.
+        :param key:
+        :param data:
+        """
         return Blowfish.new(
-            key, Blowfish.MODE_CBC, b"\x00\x01\x02\x03\x04\x05\x06\x07"
+            key,
+            Blowfish.MODE_CBC,
+            b"\x00\x01\x02\x03\x04\x05\x06\x07",
         ).decrypt(data)
 
     @staticmethod
     def _generate_blowfish_key(track_id: str) -> bytes:
+        """Generate the blowfish key for Deezer downloads.
+        :param track_id:
+        :type track_id: str
+        """
         md5_hash = hashlib.md5(track_id.encode()).hexdigest()
+        # good luck :)
         return "".join(
             chr(functools.reduce(lambda x, y: x ^ y, map(ord, t)))
             for t in zip(md5_hash[:16], md5_hash[16:], BLOWFISH_SECRET)
         ).encode()
-    
+
+
 class TidalDownloadable(Downloadable):
     """A wrapper around BasicDownloadable that includes Tidal-specific
     error messages.
@@ -250,6 +275,7 @@ class TidalDownloadable(Downloadable):
         async with aiofiles.open(in_path, "rb") as enc_file:
             dec_bytes = decryptor.decrypt(await enc_file.read())
             return dec_bytes
+
 
 class SoundcloudDownloadable(Downloadable):
     def __init__(self, session, info: dict):
