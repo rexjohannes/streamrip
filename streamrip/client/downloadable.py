@@ -38,28 +38,20 @@ def generate_temp_path(url: str):
 
 
 async def fast_async_download(path, url, headers, callback):
-    """Synchronous download with yield for every 1MB read.
+    """Asynchronous download with yield for every chunk read.
 
-    Using aiofiles/aiohttp resulted in a yield to the event loop for every 1KB,
-    which made file downloads CPU-bound. This resulted in a ~10MB max total download
-    speed. This fixes the issue by only yielding to the event loop for every 1MB read.
+    Using aiofiles/aiohttp to download the file asynchronously and yield to the event loop
+    for every chunk read to avoid CPU-bound issues.
     """
-    chunk_size: int = 2**17  # 131 KB
-    counter = 0
-    yield_every = 8  # 1 MB
-    with open(path, "wb") as file:  # noqa: ASYNC101
-        with requests.get(  # noqa: ASYNC100
-            url,
-            headers=headers,
-            allow_redirects=True,
-            stream=True,
-        ) as resp:
-            for chunk in resp.iter_content(chunk_size=chunk_size):
-                file.write(chunk)
-                callback(len(chunk))
-                if counter % yield_every == 0:
-                    await asyncio.sleep(0)
-                counter += 1
+    chunk_size: int = 2**20  # 1 MB
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers, allow_redirects=True) as resp:
+            resp.raise_for_status()
+            async with aiofiles.open(path, "wb") as file:
+                async for chunk in resp.content.iter_chunked(chunk_size):
+                    await file.write(chunk)
+                    callback(len(chunk))
 
 
 @dataclass(slots=True)
