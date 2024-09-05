@@ -38,6 +38,11 @@ def generate_temp_path(url: str):
 
 
 async def fast_async_download(path, url, headers, callback):
+    """Asynchronous download with yield for every chunk read.
+
+    Using aiofiles/aiohttp to download the file asynchronously and yield to the event loop
+    for every chunk read to avoid CPU-bound issues.
+    """
     chunk_size: int = 2**20  # 1 MB
 
     async with aiohttp.ClientSession() as session:
