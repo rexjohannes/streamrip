@@ -36,22 +36,30 @@ def generate_temp_path(url: str):
         f"__streamrip_{hash(url)}_{time.time()}.download",
     )
 
-async def fast_async_download(path, url, headers, callback):
-    """Asynchronous download with yield for every chunk read.
 
-    Using aiofiles/aiohttp to download the file asynchronously and yield to the event loop
-    for every chunk read to avoid CPU-bound issues.
+async def fast_async_download(path, url, headers, callback):
+    """Synchronous download with yield for every 1MB read.
+
+    Using aiofiles/aiohttp resulted in a yield to the event loop for every 1KB,
+    which made file downloads CPU-bound. This resulted in a ~10MB max total download
+    speed. This fixes the issue by only yielding to the event loop for every 1MB read.
     """
     chunk_size: int = 2**17  # 131 KB
-
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers, allow_redirects=True) as resp:
-            resp.raise_for_status()
-            async with aiofiles.open(path, "wb") as file:
-                async for chunk in resp.content.iter_chunked(chunk_size):
-                    await file.write(chunk)
-                    callback(len(chunk))
-                    await asyncio.sleep(0)  # Yield to the event loop
+    counter = 0
+    yield_every = 8  # 1 MB
+    with open(path, "wb") as file:  # noqa: ASYNC101
+        with requests.get(  # noqa: ASYNC100
+            url,
+            headers=headers,
+            allow_redirects=True,
+            stream=True,
+        ) as resp:
+            for chunk in resp.iter_content(chunk_size=chunk_size):
+                file.write(chunk)
+                callback(len(chunk))
+                if counter % yield_every == 0:
+                    await asyncio.sleep(0)
+                counter += 1
 
 
 @dataclass(slots=True)
@@ -161,9 +169,16 @@ class DeezerDownloadable(Downloadable):
                     blowfish_key,
                 )
 
+                buf = bytearray()
+                async for data, _ in resp.content.iter_chunks():
+                    buf += data
+                    callback(len(data))
+
                 encrypt_chunk_size = 3 * 2048
                 async with aiofiles.open(path, "wb") as audio:
-                    async for data, _ in resp.content.iter_chunks():
+                    buflen = len(buf)
+                    for i in range(0, buflen, encrypt_chunk_size):
+                        data = buf[i : min(i + encrypt_chunk_size, buflen)]
                         if len(data) >= 2048:
                             decrypted_chunk = (
                                 self._decrypt_chunk(blowfish_key, data[:2048])
@@ -172,7 +187,6 @@ class DeezerDownloadable(Downloadable):
                         else:
                             decrypted_chunk = data
                         await audio.write(decrypted_chunk)
-                        callback(len(data))
 
     @staticmethod
     def _decrypt_chunk(key, data):
