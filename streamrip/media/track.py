@@ -101,8 +101,6 @@ class Track(Media):
             self.meta.format_track_path(formatter),
             restrict=c.restrict_characters,
         )
-        if c.truncate_to > 0 and len(track_path) > c.truncate_to:
-            track_path = track_path[: c.truncate_to]
 
         self.download_path = os.path.join(
             self.folder,

@@ -1,33 +1,35 @@
 from string import printable
-
-from pathvalidate import sanitize_filename, sanitize_filepath  # type: ignore
+import re
+from pathvalidate import sanitize_filename, sanitize_filepath
 
 ALLOWED_CHARS = set(printable)
 
-
-# TODO: remove this when new pathvalidate release arrives with https://github.com/thombashi/pathvalidate/pull/48
-def truncate_str(text: str) -> str:
-    str_bytes = text.encode()
-    str_bytes = str_bytes[:255]
-    return str_bytes.decode(errors="ignore")
-
-
-def replace_umlauts(s):
-    return s.replace("Ä", "Ae").replace("ä", "ae").replace("Ö", "Oe").replace("ö", "oe").replace("Ü", "Ue").replace("ü", "ue").replace("ß", "ss")
-
+def replace_german_chars(s: str) -> str:
+    replacements = {
+        'Ä': 'Ae',
+        'ä': 'ae',
+        'Ö': 'Oe',
+        'ö': 'oe',
+        'Ü': 'Ue',
+        'ü': 'ue',
+        'ß': 'ss'
+    }
+    pattern = re.compile('|'.join(re.escape(key) for key in replacements.keys()))
+    return pattern.sub(lambda x: replacements[x.group()], s)
 
 def clean_filename(fn: str, restrict: bool = False) -> str:
-    path = truncate_str(str(sanitize_filename(fn)))
-    path = replace_umlauts(path)
+    path = str(sanitize_filename(fn))
     if restrict:
         path = "".join(c for c in path if c in ALLOWED_CHARS)
+    truncate_to = 60
+    if truncate_to > 0 and len(path) > truncate_to:
+            path = path[: truncate_to]
 
     return path
 
 
 def clean_filepath(fn: str, restrict: bool = False) -> str:
     path = str(sanitize_filepath(fn))
-    path = replace_umlauts(path)
     if restrict:
         path = "".join(c for c in path if c in ALLOWED_CHARS)
 

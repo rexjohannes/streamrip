@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
-from ..filepath_utils import clean_filename
+from ..filepath_utils import clean_filename, replace_german_chars
 from .covers import Covers
 from .util import get_quality_id, safe_get, typed
 
@@ -78,7 +78,7 @@ class AlbumMetadata:
             "container": self.info.container,
         }
 
-        return clean_filename(formatter.format(**info)).replace(' ', '_').replace('Various_Artists', 'VA')
+        return replace_german_chars(clean_filename(formatter.format(**info)).replace(' ', '_').replace('Various_Artists', 'VA'))
 
     @classmethod
     def from_qobuz(cls, resp: dict) -> AlbumMetadata:

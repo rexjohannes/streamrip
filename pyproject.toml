@@ -22,7 +22,7 @@ rip = "streamrip.rip:rip"
 python = ">=3.10 <4.0"
 mutagen = "^1.45.1"
 tomlkit = "^0.7.2"
-pathvalidate = "^2.4.1"
+pathvalidate = "^3.2.1"
 simple-term-menu = { version = "^1.2.1", platform = 'darwin|linux' }
 pick = { version = "^2", platform = 'win32|cygwin' }
 windows-curses = { version = "^2.2.0", platform = 'win32|cygwin' }
