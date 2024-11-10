@@ -21,9 +21,6 @@ def clean_filename(fn: str, restrict: bool = False) -> str:
     path = str(sanitize_filename(fn))
     if restrict:
         path = "".join(c for c in path if c in ALLOWED_CHARS)
-    truncate_to = 60
-    if truncate_to > 0 and len(path) > truncate_to:
-            path = path[: truncate_to]
 
     return path
 

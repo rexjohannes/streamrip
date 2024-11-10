@@ -102,6 +102,9 @@ class Track(Media):
             restrict=c.restrict_characters,
         )
 
+        if c.truncate_to > 0 and len(track_path) > c.truncate_to:
+            track_path = track_path[: c.truncate_to]
+
         self.download_path = os.path.join(
             self.folder,
             f"{track_path}.{self.downloadable.extension}",
